@@ -3,7 +3,8 @@ from setuptools import setup
 setup(
     name="pscanner",
     version="1.0.0",
-    py_modules=["pscanner"],
+    packages=["pscanner"],
+    include_package_data=True,
     install_requires=["click", "colorama"],
     entry_points={
         "console_scripts": [
