@@ -114,7 +114,7 @@ class SocketHandler:
 )
 def port_scanner(
         target: str,
-        default: bool = False,
+        default: bool = True,
         max_threads: int = 10,
         include: Optional[str] = None,
         exclude: Optional[str] = None,
