@@ -142,12 +142,9 @@ def port_scanner(
         click.echo(f"{Fore.YELLOW}Default ports:{Fore.RESET} {', '.join(map(str, DEFAULT_PORTS))}")
     included_ports = parse_ports(include or "")
     excluded_ports = parse_ports(exclude or "")
-    sorted_included = sorted(included_ports)
-    sorted_excluded = sorted(excluded_ports)
-    if sorted_included[0] <= 0 or 65535 < sorted_included[-1] or sorted_excluded[0] <= 0 or 65535 < sorted_excluded[-1]:
-        click.echo("-" * 50)
-        click.echo(f"{Fore.RED}Specified ports should be between 0 and 65536.{Fore.RESET}")
-        sys.exit()
+    check_ports(sorted(included_ports))
+    check_ports(sorted(excluded_ports))
+
     if include:
         click.echo(f"{Fore.YELLOW}Additional ports:{Fore.RESET} {include}")
     if exclude:
@@ -175,6 +172,14 @@ def start_threads(threads: List[Thread]):
         t.start()
     for t in threads:
         t.join()
+
+
+def check_ports(ports: List[int]):
+    if ports:
+        if ports[0] <= 0 or 65535 < ports[-1]:
+            click.echo("-" * 50)
+            click.echo(f"{Fore.RED}Specified ports should be between 0 and 65536.{Fore.RESET}")
+            sys.exit()
 
 
 def check_port(target: str, port: int, timeout: int):
