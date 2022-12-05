@@ -19,7 +19,6 @@ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER I
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-
 from __future__ import annotations
 
 import click
@@ -28,8 +27,7 @@ import sys
 import traceback
 from colorama import Fore, init
 from threading import Lock, Thread
-from typing import TYPE_CHECKING, List, Optional, Set, Type
-
+from typing import TYPE_CHECKING, Any, NoReturn
 
 if TYPE_CHECKING:
     from types import TracebackType
@@ -37,7 +35,7 @@ if TYPE_CHECKING:
 
 init()
 
-DEFAULT_PORTS = (
+DEFAULT_PORTS: tuple[int, ...] = (
     21,
     22,
     23,
@@ -65,13 +63,13 @@ DEFAULT_PORTS = (
 
 
 class SocketHandler:
-    def __init__(self, lock: Lock):
+    def __init__(self, lock: Lock) -> None:
         self._lock: Lock = lock
 
-    def __enter__(self):
-        return
+    def __enter__(self) -> SocketHandler:
+        return self
 
-    def __exit__(self, exc_type: Type[Exception], exc_val: Exception, exc_tb: TracebackType):
+    def __exit__(self, exc_type: type[Exception], exc_val: Exception, exc_tb: TracebackType) -> bool:
         if exc_val is None:
             return False
         elif isinstance(exc_val, (KeyboardInterrupt, SystemExit)):
@@ -87,7 +85,7 @@ class SocketHandler:
             )
         return True
 
-    def _locked_print(self, *args, **kwargs):
+    def _locked_print(self, *args: Any, **kwargs: Any) -> NoReturn:
         with self._lock:
             click.echo(*args, **kwargs)
         sys.exit()
@@ -108,18 +106,18 @@ class SocketHandler:
 @click.option(
     "--timeout",
     help="Amount of seconds before a connection is considered timed out.",
-    type=int,
+    type=float,
     required=False,
     default=1
 )
 def port_scanner(
         target: str,
         default: bool = True,
-        max_threads: int = 10,
-        include: Optional[str] = None,
-        exclude: Optional[str] = None,
+        max_threads: float = 10.0,
+        include: str | None = None,
+        exclude: str | None = None,
         timeout: int = 1
-):
+) -> None:
     """CLI port scanner built in Python using the click module.
 
     This is an ethical tool made with the sole purpose to educate about cyber-security and penetration testing.
@@ -153,7 +151,7 @@ def port_scanner(
 
     total_ports = sorted(list(set(DEFAULT_PORTS).union(included_ports)) if default else list(included_ports))
     used_ports = [p for p in total_ports if p not in excluded_ports]
-    threads = []
+    threads: list[Thread] = []
     with SocketHandler(Lock()):
         for p in used_ports:
             t = Thread(target=check_port, args=(target, p, timeout))
@@ -167,14 +165,14 @@ def port_scanner(
         sys.exit()
 
 
-def start_threads(threads: List[Thread]):
+def start_threads(threads: list[Thread]) -> None:
     for t in threads:
         t.start()
     for t in threads:
         t.join()
 
 
-def check_ports(ports: List[int]):
+def check_ports(ports: list[int]) -> NoReturn | None:
     if ports:
         if ports[0] <= 0 or 65535 < ports[-1]:
             click.echo("-" * 50)
@@ -182,8 +180,8 @@ def check_ports(ports: List[int]):
             sys.exit()
 
 
-def check_port(target: str, port: int, timeout: int):
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+def check_port(target: str, port: int, timeout: int) -> None:
+    s: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.settimeout(timeout)
     result = s.connect_ex((target, port))
     if result == 0:
@@ -193,9 +191,9 @@ def check_port(target: str, port: int, timeout: int):
     s.close()
 
 
-def parse_ports(ports: str) -> Set[int]:
-    port_list: Set[int] = set()
-    port = ""
+def parse_ports(ports: str) -> set[int]:
+    port_list: set[int] = set()
+    port: str = ""
     next_ranged: bool = False
     for char in ports:
         if char.isnumeric():
